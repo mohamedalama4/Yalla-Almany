@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yalla Almany - Instant Update Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #2c3e50; 
+            --german-gold: #d4af37; 
+            --white: rgba(255, 255, 255, 0.9);
+            --success: #27ae60;
+            --danger: #c0392b;
+            --progress-color: #f1c40f; 
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; padding: 0; min-height: 100vh;
+            background: url('https://www.shutterstock.com/image-photo/baroque-artistic-image-portrait-adolf-260nw-2622706447.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #2c3e50;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        nav { 
+            background: rgba(44, 62, 80, 0.95); 
+            display: flex; justify-content: center; position: sticky; top: 0; z-index: 1000;
+        }
+        nav span { cursor: pointer; color: #ecf0f1; padding: 15px 25px; font-weight: 700; transition: 0.3s; }
+        nav span:hover, nav span.active { color: var(--german-gold); background: rgba(255,255,255,0.1); }
+
+        .container { 
+            width: 95%; max-width: 850px; margin: 30px auto; padding: 30px; border-radius: 25px;
+        }
+
+        .inner-brand { text-align: center; margin-bottom: 25px; }
+        .inner-brand h2 { font-size: 2.8rem; font-weight: 900; margin: 0; color: var(--primary); }
+        .inner-brand b { color: var(--german-gold); }
+
+        input { 
+            padding: 12px; border: none; border-radius: 10px; width: 100%; box-sizing: border-box;
+            background: white; margin-bottom: 10px; font-family: inherit; font-weight: 700;
+        }
+
+        button { 
+            padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; 
+            cursor: pointer; font-weight: 900; width: 100%; transition: 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+
+        .user-row { 
+            display: flex; align-items: center; gap: 15px; padding: 12px;
+            background: rgba(255,255,255,0.7); border-radius: 15px; margin-bottom: 10px;
+        }
+        .avatar-sm { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--german-gold); object-fit: cover; }
+        
+        .bar-container { flex-grow: 1; }
+        .bar-bg { background: #bdc3c7; height: 14px; border-radius: 10px; overflow: hidden; }
+        .bar-fill { 
+            background: linear-gradient(90deg, #f39c12, #f1c40f);
+            height: 100%; transition: width 0.3s ease-out; /* حركة أسرع */
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+        }
+
+        .lesson-item { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.8);
+            border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.2s;
+        }
+        .lesson-item.completed { border-left: 10px solid var(--success); }
+
+        .admin-section { 
+            margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.9); 
+            border-radius: 15px; border: 2px solid var(--primary);
+        }
+        .admin-item { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-bottom: 1px solid #ddd;
+        }
+        .btn-del { background: var(--danger); width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<nav id="main-nav" class="hidden">
+    <span id="nav-home" onclick="showPage('home')">Dashboard</span>
+    <span id="nav-progress" onclick="showPage('progress')">Lessons</span>
+    <span id="nav-profile" onclick="showPage('profile')">Profile</span>
+    <span onclick="location.reload()" style="color: var(--danger);">Logout</span>
+</nav>
+
+<div class="container glass-effect">
+    <div id="page-login">
+        <div class="inner-brand"><h2>Yalla <b>Almany</b></h2></div>
+        <input type="text" id="login-user" placeholder="Username">
+        <input type="password" id="login-pass" placeholder="Password">
+        <button onclick="handleAuth()">Login</button>
+        <div style="text-align:center; margin-top: 15px;">
+            <small style="cursor: pointer; font-weight: 700;" onclick="document.getElementById('admin-login-box').classList.toggle('hidden')">Staff Access</small>
+        </div>
+        <div id="admin-login-box" class="hidden">
+            <input type="password" id="adm-pass" placeholder="Admin Key" style="margin-top:10px;">
+            <button onclick="checkAdminLogin()" style="background:#111;">Admin Login</button>
+        </div>
+    </div>
+
+    <div id="page-home" class="hidden">
+        <div class="inner-brand"><h2>Yalla <b>Almany</b></h2></div>
+        <h4 style="text-align: center;">Leaderboard 🏆</h4>
+        <div id="leaderboard-list"></div>
+
+        <div id="admin-box" class="hidden admin-section">
+            <h3 style="margin-top:0;">Admin Panel</h3>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="adm-std-name" placeholder="Student Name">
+                <input type="text" id="adm-std-pass" placeholder="Password">
+                <button onclick="updateStudent()" style="background: var(--success);">Add / Update Student</button>
+                <div id="admin-users-list" style="margin-top: 10px;"></div>
+            </div>
+            <hr>
+            <div style="margin-top: 20px;">
+                <input type="text" id="adm-lesson-title" placeholder="Lesson Title">
+                <button onclick="addLesson()">Add Lesson</button>
+                <div id="admin-lessons-list" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-progress" class="hidden">
+        <div class="inner-brand"><h2>Yalla <b>Almany</b></h2></div>
+        <h4 style="text-align: center;">My Progress 📖</h4>
+        <div id="lessons-list"></div>
+    </div>
+
+    <div id="page-profile" class="hidden">
+        <div style="text-align:center;">
+            <img id="profile-img" class="avatar-sm" style="width:120px; height:120px;" src="https://via.placeholder.com/150">
+            <h3 id="profile-name-display"></h3>
+            <label style="background: var(--german-gold); padding: 10px; border-radius: 10px; cursor: pointer; color: white; font-weight: 700;">
+                Change Photo
+                <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar()" style="display: none;">
+            </label>
+            <div style="margin-top:30px; max-width: 300px; margin: auto;">
+                <input type="password" id="new-user-pass" placeholder="New Password">
+                <button onclick="changeUserPass()">Update Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const DB_URL = "https://germany-b892a-default-rtdb.europe-west1.firebasedatabase.app/courseData";
+    let currentUser = "";
+    let isAdmin = false;
+    let dbData = { lessons: {}, users: {}, userProfiles: {}, adminPassword: "123" };
+
+    // تحديث الشاشة فوراً
+    function refreshUI() {
+        renderLeaderboard();
+        if (currentUser) {
+            renderLessons();
+            updateProfileUI();
+            if(isAdmin) renderAdminLists();
+        }
+    }
+
+    async function sync() {
+        try {
+            const res = await fetch(`${DB_URL}.json`);
+            const data = await res.json();
+            if (data) {
+                dbData = { ...dbData, ...data };
+                refreshUI();
+            }
+        } catch(e) { console.error("Sync error"); }
+    }
+
+    async function save(path, val) {
+        // Optimistic UI: لا تنتظر الشبكة، حدّث البيانات محلياً أولاً
+        const keys = path.split('/');
+        let current = dbData;
+        for(let i=0; i<keys.length-1; i++) {
+            if(!current[keys[i]]) current[keys[i]] = {};
+            current = current[keys[i]];
+        }
+        
+        if (val === null) delete current[keys[keys.length-1]];
+        else current[keys[keys.length-1]] = val;
+
+        refreshUI(); // تحديث فوري على الشاشة
+
+        // الإرسال للسيرفر في الخلفية
+        await fetch(`${DB_URL}/${path}.json`, { 
+            method: val === null ? 'DELETE' : 'PUT', 
+            body: val === null ? null : JSON.stringify(val) 
+        });
+    }
+
+    function handleAuth() {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        if (dbData.users && dbData.users[u] === p) { currentUser = u; startApp(); } 
+        else alert("Invalid Login");
+    }
+
+    function checkAdminLogin() {
+        if (document.getElementById('adm-pass').value === (dbData.adminPassword || "123")) {
+            isAdmin = true; currentUser = "Admin";
+            document.getElementById('admin-box').classList.remove('hidden');
+            startApp();
+        } else alert("Wrong Key");
+    }
+
+    function startApp() {
+        document.getElementById('page-login').classList.add('hidden');
+        document.getElementById('main-nav').classList.remove('hidden');
+        document.getElementById('profile-name-display').innerText = currentUser;
+        showPage('home');
+        refreshUI();
+        sync();
+    }
+
+    function showPage(page) {
+        ['home', 'progress', 'profile'].forEach(p => {
+            document.getElementById(`page-${p}`).classList.add('hidden');
+            document.getElementById(`nav-${p}`).classList.remove('active');
+        });
+        document.getElementById(`page-${page}`).classList.remove('hidden');
+        document.getElementById(`nav-${page}`).classList.add('active');
+    }
+
+    function renderLeaderboard() {
+        const board = document.getElementById('leaderboard-list');
+        const lessons = dbData.lessons || {};
+        const total = Object.keys(lessons).length || 1;
+        let progress = {};
+        if (dbData.users) Object.keys(dbData.users).forEach(u => progress[u] = 0);
+        Object.keys(lessons).forEach(id => {
+            const done = (lessons[id].completedBy || "").split(',').filter(u => u);
+            done.forEach(u => { if (progress.hasOwnProperty(u)) progress[u]++; });
+        });
+
+        let html = "";
+        Object.entries(progress).sort((a,b) => b[1]-a[1]).forEach(([name, count]) => {
+            const pc = Math.round((count/total)*100);
+            const photo = (dbData.userProfiles && dbData.userProfiles[name]) ? dbData.userProfiles[name].photo : "https://via.placeholder.com/150";
+            html += `
+                <div class="user-row">
+                    <img src="${photo}" class="avatar-sm">
+                    <div style="flex-grow: 1;">
+                        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:0.9rem;">
+                            <span>${name}</span><span>${pc}%</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill" style="width:${pc}%"></div></div>
+                    </div>
+                </div>`;
+        });
+        board.innerHTML = html;
+    }
+
+    function renderLessons() {
+        const list = document.getElementById('lessons-list');
+        let html = "";
+        Object.entries(dbData.lessons || {}).forEach(([id, lesson]) => {
+            const done = (lesson.completedBy || "").split(',').includes(currentUser);
+            html += `
+                <div class="lesson-item ${done ? 'completed' : ''}" onclick="toggleLesson('${id}')">
+                    <span>${lesson.title}</span>
+                    <span style="color:${done?'#27ae60':'#ccc'}; font-size:1.5rem;">${done?'✔':'○'}</span>
+                </div>`;
+        });
+        list.innerHTML = html;
+    }
+
+    function toggleLesson(id) {
+        if (isAdmin) return;
+        let users = (dbData.lessons[id].completedBy || "").split(',').filter(u => u);
+        if (users.includes(currentUser)) users = users.filter(u => u !== currentUser);
+        else users.push(currentUser);
+        save(`lessons/${id}/completedBy`, users.join(','));
+    }
+
+    function renderAdminLists() {
+        const uList = document.getElementById('admin-users-list');
+        let uHtml = "<strong>Students:</strong>";
+        Object.entries(dbData.users || {}).forEach(([name, pass]) => {
+            uHtml += `<div class="admin-item"><span>${name}</span><button class="btn-del" onclick="deleteItem('users/${name}')">Del</button></div>`;
+        });
+        uList.innerHTML = uHtml;
+
+        const lList = document.getElementById('admin-lessons-list');
+        let lHtml = "<strong>Lessons:</strong>";
+        Object.entries(dbData.lessons || {}).forEach(([id, lesson]) => {
+            lHtml += `<div class="admin-item"><span>${lesson.title}</span><button class="btn-del" onclick="deleteItem('lessons/${id}')">Del</button></div>`;
+        });
+        lList.innerHTML = lHtml;
+    }
+
+    function updateStudent() {
+        const n = document.getElementById('adm-std-name').value.trim();
+        const p = document.getElementById('adm-std-pass').value.trim();
+        if(n && p) {
+            save(`users/${n}`, p);
+            document.getElementById('adm-std-name').value = "";
+            document.getElementById('adm-std-pass').value = "";
+        }
+    }
+
+    function addLesson() {
+        const t = document.getElementById('adm-lesson-title').value.trim();
+        if(t) {
+            const id = "L" + Date.now();
+            save(`lessons/${id}`, { title: t, completedBy: "" });
+            document.getElementById('adm-lesson-title').value = "";
+        }
+    }
+
+    function deleteItem(path) {
+        if(confirm("Confirm Delete?")) save(path, null);
+    }
+
+    function uploadAvatar() {
+        const file = document.getElementById('avatar-input').files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => save(`userProfiles/${currentUser}/photo`, reader.result);
+        if(file) reader.readAsDataURL(file);
+    }
+
+    function changeUserPass() {
+        const p = document.getElementById('new-user-pass').value.trim();
+        if(p) { save(`users/${currentUser}`, p); alert("Saved!"); }
+    }
+
+    function updateProfileUI() {
+        if (dbData.userProfiles && dbData.userProfiles[currentUser]) {
+            document.getElementById('profile-img').src = dbData.userProfiles[currentUser].photo || "https://via.placeholder.com/150";
+        }
+    }
+
+    sync();
+    setInterval(sync, 5000); // مزامنة كل 5 ثواني للتأكد من بيانات الآخرين
+</script>
+</body>
+</html>
