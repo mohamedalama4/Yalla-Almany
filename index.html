@@ -82,6 +82,13 @@
         .hidden { display: none; }
         .inner-brand { text-align: center; margin-bottom: 20px; }
         .inner-brand b { color: var(--german-gold); }
+
+        /* ستايل صورة الرانك */
+        .rank-avatar {
+            width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--german-gold); 
+            object-fit: cover; margin-right: 10px; background: #eee;
+        }
+        .rank-user-info { display: flex; align-items: center; }
     </style>
 </head>
 <body>
@@ -114,7 +121,6 @@
 
         <div id="admin-box" class="hidden admin-section">
             <h3 style="margin-top:0; color: var(--german-gold);">Management Panel ⚙️</h3>
-            
             <div style="margin-bottom:20px;">
                 <strong>👥 Manage Students:</strong>
                 <div style="display:flex; gap:5px; margin-top:5px;">
@@ -127,7 +133,7 @@
             <hr>
             <div style="margin-bottom:20px; margin-top:15px;">
                 <strong>📚 Manage Curriculum:</strong>
-                <input type="text" id="adm-lesson-title" placeholder="New Lesson Title" style="margin-top:5px;">
+                <input type="text" id="adm-lesson-title" placeholder="New Lesson Title (or URL)" style="margin-top:5px;">
                 <button onclick="addLesson()" style="background:var(--primary)">Add New Lesson</button>
                 <div id="admin-lessons-list" style="margin-top:10px"></div>
             </div>
@@ -156,7 +162,7 @@
         <div class="words-container-area">
             <div style="overflow-x: auto;">
                 <table class="words-table">
-                    <thead><tr><th>Meaning</th><th>German</th><th>By</th><th>Action</th></tr></thead>
+                    <thead><tr><th>German</th><th>Meaning</th><th>By</th><th>Action</th></tr></thead>
                     <tbody id="words-table-body"></tbody>
                 </table>
             </div>
@@ -179,19 +185,15 @@
             
             <div class="admin-section" style="background: rgba(255,255,255,0.6); border: 1px solid #ddd; max-width: 400px; margin: 0 auto;">
                 <p style="font-weight: bold; margin-bottom: 15px;">Account Settings</p>
-                
                 <label style="background:var(--primary); color:white; padding:10px 15px; border-radius:8px; cursor:pointer; display: block; margin-bottom: 15px; font-size: 0.9rem;">
                     Change Photo <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar()" style="display:none">
                 </label>
-
                 <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
-
                 <div id="password-change-area">
                     <input type="password" id="new-password" placeholder="Enter New Password" style="margin-bottom: 10px;">
                     <button onclick="updatePassword()" style="background:var(--success); font-size: 0.85rem; padding: 10px;">Update Password</button>
                 </div>
             </div>
-
             <button onclick="location.reload()" style="margin-top:40px; background:var(--danger); width: 150px;">Logout</button>
         </div>
     </div>
@@ -259,19 +261,15 @@
         document.getElementById(`nav-${page}`).classList.add('active');
     }
 
-    // New Function to Update Password
     async function updatePassword() {
         const newPass = document.getElementById('new-password').value.trim();
         if (!newPass) { alert("Please enter a new password"); return; }
         if (newPass.length < 4) { alert("Password too short!"); return; }
-        
         if (confirm("Change password for " + currentUser + "?")) {
-            // Check if user exists in the main users list
-            if (isAdmin) {
-                alert("Admin password must be changed via Database for security.");
-            } else {
+            if (isAdmin) alert("Admin password must be changed via Database.");
+            else {
                 await save(`users/${currentUser}`, newPass);
-                alert("Password updated successfully!");
+                alert("Password updated!");
                 document.getElementById('new-password').value = "";
             }
         }
@@ -289,28 +287,16 @@
             lHtml += `<div class="admin-item-row"><span>${l.title}</span><button class="btn-del-small" onclick="deleteItem('lessons/${id}')">Delete</button></div>`;
         });
         document.getElementById('admin-lessons-list').innerHTML = lHtml;
-
-        let pHtml = "";
-        Object.entries(dbData.plans || {}).forEach(([id, p]) => {
-            pHtml += `<div class="admin-item-row"><span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;">${p.text}</span><button class="btn-del-small" onclick="deleteItem('plans/${id}')">Remove</button></div>`;
-        });
-        document.getElementById('admin-plans-list').innerHTML = pHtml;
     }
 
     function addLesson() {
         const t = document.getElementById('adm-lesson-title').value.trim();
-        if(t) {
-            save(`lessons/L${Date.now()}`, { title: t, completedBy: "" });
-            document.getElementById('adm-lesson-title').value = "";
-        }
+        if(t) { save(`lessons/L${Date.now()}`, { title: t, completedBy: "" }); document.getElementById('adm-lesson-title').value = ""; }
     }
 
     function addPlan() {
         const txt = document.getElementById('plan-input').value.trim();
-        if(txt) {
-            save(`plans/P${Date.now()}`, { text: txt, time: Date.now() });
-            document.getElementById('plan-input').value = "";
-        }
+        if(txt) { save(`plans/P${Date.now()}`, { text: txt, time: Date.now() }); document.getElementById('plan-input').value = ""; }
     }
 
     function addNewWord() {
@@ -318,8 +304,9 @@
         const ar = document.getElementById('word-ar').value.trim();
         if(de && ar) {
             save(`words/W${Date.now()}`, { de, ar, user: currentUser, time: Date.now() });
-            document.getElementById('word-de').value = ""; document.getElementById('word-ar').value = "";
-            showPage('words');
+            document.getElementById('word-de').value = ""; 
+            document.getElementById('word-ar').value = "";
+            alert("تمت إضافة الكلمة بنجاح ✅");
         }
     }
 
@@ -338,18 +325,30 @@
         if(n && p) { save(`users/${n}`, p); document.getElementById('adm-std-name').value=""; document.getElementById('adm-std-pass').value=""; }
     }
 
+    // التعديل الجديد: إظهار صورة الشخص في الرانك
     function renderLeaderboard() {
         const board = document.getElementById('leaderboard-list');
         const lessons = dbData.lessons || {};
         const total = Object.keys(lessons).length || 1;
         let html = "";
+        
         Object.keys(dbData.users || {}).forEach(user => {
             let count = 0;
             Object.values(lessons).forEach(l => { if((l.completedBy||"").includes(user)) count++; });
             let pc = Math.round((count/total)*100);
+            
+            // جلب صورة المستخدم أو وضع صورة افتراضية
+            const userImg = (dbData.userProfiles && dbData.userProfiles[user]) ? dbData.userProfiles[user].photo : "https://via.placeholder.com/50";
+
             html += `<div style="background:rgba(255,255,255,0.7); margin-bottom:8px; padding:10px; border-radius:12px;">
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.9rem;"><span>${user}</span><span>${pc} %</span></div>
-                <div style="background:#ddd; height:6px; border-radius:10px; margin-top:5px;"><div style="width:${pc}%; background:var(--german-gold); height:100%; border-radius:10px;"></div></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; font-size:0.9rem; margin-bottom:5px;">
+                    <div class="rank-user-info">
+                        <img src="${userImg}" class="rank-avatar">
+                        <span>${user}</span>
+                    </div>
+                    <span>${pc} %</span>
+                </div>
+                <div style="background:#ddd; height:6px; border-radius:10px;"><div style="width:${pc}%; background:var(--german-gold); height:100%; border-radius:10px;"></div></div>
             </div>`;
         });
         board.innerHTML = html;
@@ -360,8 +359,16 @@
         let html = "";
         Object.entries(dbData.lessons || {}).forEach(([id, l]) => {
             const done = (l.completedBy || "").includes(currentUser);
+            let displayTitle = l.title;
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            if (urlRegex.test(l.title)) {
+                displayTitle = l.title.replace(urlRegex, function(url) {
+                    return `<a href="${url}" target="_blank" onclick="event.stopPropagation()" style="color: var(--primary); text-decoration: underline; font-weight: bold;">(رابط الدرس 🔗)</a>`;
+                });
+            }
             html += `<div class="plan-card" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center" onclick="toggleLesson('${id}')">
-                <span>${l.title}</span><span style="font-size:1.5rem">${done?'✔':'○'}</span>
+                <span style="flex-grow:1; margin-right:10px;">${displayTitle}</span>
+                <span style="font-size:1.5rem">${done?'✔':'○'}</span>
             </div>`;
         });
         list.innerHTML = html || "<p style='text-align:center'>No lessons yet.</p>";
